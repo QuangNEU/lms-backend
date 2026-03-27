@@ -1,0 +1,39 @@
+# 1. Thư mục chứa thư viện (Bắt buộc phải ignore để tránh phình to Repo)
+node_modules/
+
+# 2. Biến môi trường & Bảo mật (Tối quan trọng - Tuyệt đối không push lên mạng)
+.env
+.env.test
+.env.production
+.env.local
+
+# 3. File Log (Ghi nhận lỗi của hệ thống)
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 4. Các file rác do Hệ điều hành tự sinh ra
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 5. Các thư mục cấu hình của Code Editor (VS Code, WebStorm)
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 6. Các thư mục build/coverage (Nếu sau này bạn viết test hoặc build code)
+dist/
+build/
+coverage/
+.nyc_output/
