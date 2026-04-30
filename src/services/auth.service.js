@@ -1,4 +1,4 @@
-const supabase = require('../config/supabase')
+const supabase = require('../config/supabase.js')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
 
@@ -26,11 +26,11 @@ const login = async (email, password) => {
     const { data: user, error } = await supabase.from('User').select('*').eq('email', email).single();
     if (error || !user) throw new Error("Email hoac mat khau khong chinh xac");
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await password == user.password;
     if (!isMatch) throw new Error('Email hoặc mật khẩu không chính xác!');
 
-    const payload = { id: user.id, email: user.email, role: user.role };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const payload = { id: user.id, email: user.email, role: user.role, full_name: user.full_name };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '3h' });
 
     delete user.password;
 
