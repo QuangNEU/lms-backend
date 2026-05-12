@@ -85,28 +85,51 @@ const getCourseDetailById = async (id) => {
         Module(
             id,title,description, order_index,
                 Lesson (
-                    id, title, content, order_index
+                    id, title, content, order_index,
+                    Material ( file_url )
                 ),
                 Quizzes (
                     id, title, duration_minutes, is_ai_generated, order_index
+                ),
+                Material ( 
+                    id, title, file_url 
                 )
         )
         `)
         .eq('id', id)
         .single()
-    if (error) {
-        console.error('Lỗi truy vấn Database:', error);
-        throw new Error('Không thể lấy dữ liệu khóa học');
-    }
 
-    if (!data) {
-        return null;
+    if (error) {
+        // In ra màn hình Terminal toàn bộ chi tiết lỗi của Supabase
+        console.error('❌ LỖI CHI TIẾT TỪ SUPABASE:', JSON.stringify(error, null, 2));
+
+        // Ném thẳng cái lỗi thật ra Frontend để dễ đọc
+        throw new Error(`Lỗi Supabase: ${error.message || error.details}`);
     }
+    if (!data) return null;
+
     const formattedModules = data.Module.map(module => {
-        const lessonsWithType = module.Lesson.map(l => ({ ...l, type: 'lesson' }));
+        // 1. Lấy Lesson
+        const lessonsWithType = module.Lesson.map(l => {
+            const attachedFileUrl = l.Material && l.Material.length > 0 ? l.Material[0].file_url : null;
+            delete l.Material;
+            return { ...l, type: 'lesson', file_url: attachedFileUrl };
+        });
+
+        // 2. Lấy Quiz
         const quizzesWithType = module.Quizzes.map(q => ({ ...q, type: 'quiz' }));
 
-        const combinedItems = [...lessonsWithType, ...quizzesWithType];
+        // 3. 💡 Lấy Material độc lập (đang bị null lesson_id như trong ảnh của bạn)
+        const materialsWithType = (module.Material || []).map(m => ({
+            id: `mat-${m.id}`,
+            title: m.title || 'Tài liệu tham khảo', // Sẽ hiển thị tên file PDF
+            file_url: m.file_url,
+            type: 'lesson', // Cứ gán là lesson để Frontend xài chung cái icon màu xanh
+            order_index: 99 // Cho nó nằm dưới cùng của chương
+        }));
+
+        // Gộp cả 3 loại lại thành 1 list
+        const combinedItems = [...lessonsWithType, ...quizzesWithType, ...materialsWithType];
         combinedItems.sort((a, b) => a.order_index - b.order_index);
 
         return {
@@ -114,21 +137,17 @@ const getCourseDetailById = async (id) => {
             title: module.title,
             description: module.description,
             order_index: module.order_index,
-            items: combinedItems // Mảng chứa chung cả bài học và kiểm tra
+            items: combinedItems
         };
     });
 
-    // 2. Sắp xếp lại các Module từ Chương 1 đến Chương n
     formattedModules.sort((a, b) => a.order_index - b.order_index);
-
-    // 3. Xóa bỏ mảng gốc cho sạch sẽ
     delete data.Module;
 
-    // 4. BẮT BUỘC PHẢI CÓ RETURN
     return {
         ...data,
         modules: formattedModules,
-        teacher: data.User // Đổi tên User thành teacher cho dễ đọc ở Frontend
+        teacher: data.User
     };
 }
 
